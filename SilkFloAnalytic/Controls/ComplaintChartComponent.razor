@@ -1,0 +1,62 @@
+﻿
+@inject ComplaintStore complaintStore
+
+@if (_complaintsGroup != null)
+{
+    <RadzenChart>
+        <RadzenColumnSeries Data="@_complaintsData" CategoryProperty="Year" LineType="LineType.Solid" ValueProperty="NumberOfComplaints">
+            <ChildContent>
+                <RadzenMarkers MarkerType="MarkerType.Square"></RadzenMarkers>
+            </ChildContent>
+            <TooltipTemplate Context="_complaintsData">
+                <div>
+                    Total complaints for the year <span><b>@_complaintsData.Year:</b></span><br />
+                    <strong>@_complaintsData.NumberOfComplaints</strong>
+                </div>
+            </TooltipTemplate>
+        </RadzenColumnSeries>
+        <RadzenLegend Visible="false" />
+        <RadzenValueAxis Min="0" Step="5">
+            <RadzenGridLines Visible="true" />
+            <RadzenAxisTitle Text="Number of Complaints" />
+        </RadzenValueAxis>
+        <RadzenCategoryAxis>
+            <RadzenGridLines Visible="true" />
+            <RadzenAxisTitle Text="Complaints Year" />
+        </RadzenCategoryAxis>
+    </RadzenChart>
+}
+
+@code {
+    private List<Complaint> _complaints;
+    private IEnumerable<IGrouping<string, Complaint>> _complaintsGroup;
+    private List<DataItem> _complaintsData;
+    private long maxAxisValue;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            maxAxisValue = long.MaxValue;
+            _complaints = Complaints.ToList();
+            if (_complaints.Any())
+            {
+                _complaintsGroup = _complaints.GroupBy(u => u.DateCreated.Year.ToString());
+                _complaintsData = new();
+                foreach (var item in _complaintsGroup)
+                {
+                    _complaintsData.Add(new DataItem
+                    {
+                        NumberOfComplaints = item.Count(),
+                        Year = item.Key
+                    });
+                }
+            }
+            StateHasChanged();
+        }
+    }
+
+    [Parameter]
+    public IEnumerable<Complaint> Complaints { get; set; }
+}

@@ -1,0 +1,95 @@
+﻿@page "/fetchusers"
+
+@inject UserStore userStore
+
+@if (_users == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<div class="container-fluid">
+    <RadzenCard>
+        <h3><b>All Complaints</b></h3>
+        <RadzenDataGrid Data="@_users" AllowPaging="true" PageSize="10" TItem="User" ShowPagingSummary="true" AllowColumnResize="true">
+            <Columns>
+                <RadzenDataGridColumn TItem="User" Property="User.FirstName" Title="First Name" />
+                <RadzenDataGridColumn TItem="User" Property="User.LastName" Title="Last Name" />
+                <RadzenDataGridColumn TItem="User" Property="User.UserName" Title="User Name" />
+                <RadzenDataGridColumn TItem="User" Property="User.EmailAddress" Title="Email Address" />
+                <RadzenDataGridColumn TItem="User" Property="User.PhoneNumber" Title="Phone Number" />
+                <RadzenDataGridColumn TItem="User" Property="User.StateOfOrigin" Title="State Of Origin" />
+                <RadzenDataGridColumn TItem="Complaint" Property="Complaint.IsActive" Title="IsActive">
+                    <Template Context="data">
+                        @if (data.IsActive == true)
+                        {
+                            <p style="color:blue">@data.IsActive</p>
+                        }
+                        else
+                        {
+                            <p style="color:red">@data.IsActive</p>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="User" Property="User.Gender" Title="Gender" />
+                <RadzenDataGridColumn TItem="Complaint" Property="Complaint.DateCreated" Title="DateCreated" />
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+    @*<div class="table-responsive">
+        <table class="table table-bordered table-dark table-striped table-sm">
+            <thead style="font-size:small">
+                <tr>
+                    <th>S/N</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>User Name</th>
+                    <th>Email Address</th>
+                    <th>Phone Number</th>
+                    <th>State Of Origin</th>
+                    <th>Gender</th>
+                    <th>IsActive</th>
+                    <th>Date Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in _users)
+                {
+                    <tr>
+                        <td>@count</td>
+                        <td>@user.FirstName</td>
+                        <td>@user.LastName</td>
+                        <td>@user.UserName</td>
+                        <td>@user.EmailAddress</td>
+                        <td>@user.PhoneNumber</td>
+                        <td>@user.StateOfOrigin</td>
+                        <td>@user.Gender.ToString()</td>
+                        @if (user.IsActive)
+                        {
+                            <td style="color:blue">@user.IsActive</td>
+                        }
+                        else
+                        {
+                            <td style="color:red">@user.IsActive</td>
+                        }
+                        <td>@user.DateCreated.ToString("G")</td>
+                    </tr>
+                    count++;
+                }
+            </tbody>
+        </table>
+    </div>*@
+</div>
+}
+
+@code {
+    private IEnumerable<User> _users;
+    private long count = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userStore.AddStateChangeListener(() => { StateHasChanged(); });
+        await userStore.FetUsersAsync();
+        _users = await userStore.GetUsers();
+    }
+}

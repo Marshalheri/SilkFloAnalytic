@@ -1,0 +1,60 @@
+﻿
+@if (_usersGroup != null)
+{
+    <RadzenChart>
+        <RadzenLineSeries Data="@_usersData" CategoryProperty="Year" LineType="LineType.Solid" ValueProperty="NumberOfUsers">
+            <ChildContent>
+                <RadzenMarkers MarkerType="MarkerType.Square"></RadzenMarkers>
+            </ChildContent>
+            <TooltipTemplate Context="_usersData">
+                <div>
+                    Total enrolled users for the year <span><b>@_usersData.Year:</b></span><br />
+                    <strong>@_usersData.NumberOfUsers</strong>
+                </div>
+            </TooltipTemplate>
+        </RadzenLineSeries>
+        <RadzenLegend Visible="false" />
+        <RadzenValueAxis Min="0" Step="5">
+            <RadzenGridLines Visible="true" />
+            <RadzenAxisTitle Text="Number of Users Enrollment" />
+        </RadzenValueAxis>
+        <RadzenCategoryAxis>
+            <RadzenGridLines Visible="true" />
+            <RadzenAxisTitle Text="Users Enrollment Year" />
+        </RadzenCategoryAxis>
+    </RadzenChart>
+}
+
+@code {
+    private List<User> _users;
+    private IEnumerable<IGrouping<string, User>> _usersGroup;
+    private List<DataItem> _usersData;
+    private long maxAxisValue;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            maxAxisValue = long.MaxValue;
+            _users = User.ToList();
+            if (_users.Any())
+            {
+                _usersGroup = _users.GroupBy(u => u.DateCreated.Year.ToString());
+                _usersData = new();
+                foreach (var item in _usersGroup)
+                {
+                    _usersData.Add(new DataItem
+                    {
+                        NumberOfUsers = item.Count(),
+                        Year = item.Key
+                    });
+                }
+            }
+            StateHasChanged();
+        }
+    }
+
+    [Parameter]
+    public IEnumerable<User> User { get; set; }
+}

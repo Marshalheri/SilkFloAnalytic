@@ -1,0 +1,75 @@
+﻿@page "/"
+@inject UserStore userStore
+@inject ComplaintStore complaintStore
+
+
+<div class="container-fluid p-0" style="position: relative">
+    <div class="row no-gutters mx-n2">
+        <div class="col-xl-3 col-lg-6 p-2">
+            <CardComponent Title="@CardTitle.ActiveUsers.GetEnumDescription()" User="@_user" />
+        </div>
+        <div class="col-xl-3 col-lg-6 p-2">
+            <CardComponent Title="@CardTitle.InActiveUsers.GetEnumDescription()" User="@_user" />
+        </div>
+        <div class="col-xl-3 col-lg-6 p-2">
+            <CardComponent Title="@CardTitle.ActiveComplaints.GetEnumDescription()" Complaints="@_complaints" />
+        </div>
+        <div class="col-xl-3 col-lg-6 p-2">
+            <CardComponent Title="@CardTitle.InActiveComplaints.GetEnumDescription()" Complaints="@_complaints" />
+        </div>
+    </div>
+
+    <div class="row no-gutters mx-n2">
+        <div class="col-lg-6 p-2">
+            <RadzenCard style="height: 280px">
+                <UsersChartComponent User="@_user" />
+            </RadzenCard>
+        </div>
+        <div class="col-lg-6 p-2">
+            <RadzenCard style="height: 280px">
+                <ComplaintChartComponent Complaints="@_complaints" />
+            </RadzenCard>
+        </div>
+    </div>
+
+    <div class="row no-gutters mx-n2">
+        <div class="col p-2">
+            <RadzenCard>
+                <h3><b>All Complaints</b></h3>
+                <RadzenDataGrid Data="@_complaints" AllowPaging="true" PageSize="6" TItem="Complaint" ShowPagingSummary="true">
+                    <Columns>
+                        <RadzenDataGridColumn Width="50px" TItem="Complaint" Title="S/N" TextAlign="TextAlign.Center">
+                            <Template Context="count">
+                                @(_complaints.IndexOf(count) + 1)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Complaint" Property="Complaint.Subject" Title="Subject" />
+                        <RadzenDataGridColumn TItem="Complaint" Property="Complaint.Description" Title="Description" />
+                        <RadzenDataGridColumn TItem="Complaint" Property="Complaint.IsActive" Title="IsActive" />
+                        <RadzenDataGridColumn TItem="Complaint" Property="Complaint.DateCreated" Title="DateCreated">
+                            <Template Context="data">
+                                @(data.DateCreated.ToString("G"))
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenCard>
+        </div>
+    </div>
+</div>
+
+@code{
+
+    private IEnumerable<User> _user;
+    private IList<Complaint> _complaints;
+    long count = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        userStore.AddStateChangeListener(() => { StateHasChanged(); });
+        complaintStore.AddStateChangeListener(() => { StateHasChanged(); });
+        await userStore.FetUsersAsync();
+        await complaintStore.FetchComplaintsAsync();
+        _user = await userStore.GetUsers();
+        _complaints = (await complaintStore.GetComplaints()).ToList();
+    }
+}

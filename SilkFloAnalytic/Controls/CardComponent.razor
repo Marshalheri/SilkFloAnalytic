@@ -1,0 +1,136 @@
+﻿
+<RadzenCard>
+    <div class="row">
+        <div class="col-9">
+            <h4><b>@Title</b></h4>
+        </div>
+        <div class="col-3 p-1">
+            @if (CardTitle.ActiveUsers.GetEnumDescription() == Title || CardTitle.InActiveUsers.GetEnumDescription() == Title)
+            {
+                @if (isActive)
+                {
+                    <label style="color: #009B51; font-size: 3rem">@activeCount</label>
+                }
+                else
+                {
+                    <label style="color: #F31155; font-size: 3rem">@inActiveCount</label>
+                }
+
+            }
+            else if (CardTitle.ActiveComplaints.GetEnumDescription() == Title || CardTitle.InActiveComplaints.GetEnumDescription() == Title)
+            {
+                @if (isActive)
+                {
+                    <label style="color: #009B51; font-size: 3rem">@activeCount</label>
+                }
+                else
+                {
+                    <label style="color: #F31155; font-size: 3rem">@inActiveCount</label>
+                }
+            }
+        </div>
+    </div>
+ 
+    @if (_dataItem != null && _dataItem.Any())
+    {
+        <RadzenChart style="width: 100%; height: 120px; margin-bottom: -30px;">
+            @if (isActive)
+            {
+                <RadzenColumnSeries Data=@_dataItem ValueProperty="NumberOfUsers" CategoryProperty="Year" Fill="#009B51" />
+            }
+            else
+            {
+                <RadzenColumnSeries Data=@_dataItem ValueProperty="NumberOfUsers" CategoryProperty="Year" Fill="#F31155" />
+            }
+            <RadzenValueAxis Visible="false" />
+            <RadzenCategoryAxis Visible="false" />
+            <RadzenColumnOptions Margin="5" />
+            <RadzenLegend Visible="false" />
+        </RadzenChart>
+    }
+</RadzenCard>
+
+@code {
+
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public IEnumerable<User> User { get; set; }
+
+    [Parameter]
+    public IEnumerable<Complaint> Complaints { get; set; }
+
+
+    private IEnumerable<User> _users;
+    private IEnumerable<Complaint> _complaints;
+    private IEnumerable<IGrouping<string, User>> _usersGroup;
+    private IEnumerable<IGrouping<string, Complaint>> _complaintsGroup;
+    private List<DataItem> _dataItem;
+    private long activeCount = 0;
+    private long inActiveCount = 0;
+    private bool isActive = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Title == CardTitle.ActiveUsers.GetEnumDescription() || Title == CardTitle.ActiveComplaints.GetEnumDescription())
+            {
+                isActive = true;
+            }
+            if (CardTitle.ActiveUsers.GetEnumDescription() == Title || CardTitle.InActiveUsers.GetEnumDescription() == Title)
+            {
+                await GetUsers();
+            }
+            else if (CardTitle.ActiveComplaints.GetEnumDescription() == Title || CardTitle.InActiveComplaints.GetEnumDescription() == Title)
+            {
+                await GetComplaints();
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task GetUsers()
+    {
+        _users = User;
+        if (_users.Any())
+        {
+            activeCount = (long)_users.Count(x => x.IsActive);
+            inActiveCount = (long)_users.Count(x => x.IsActive != true);
+            _usersGroup = _users.GroupBy(u => u.DateCreated.Year.ToString());
+            _dataItem = new();
+            foreach (var item in _usersGroup)
+            {
+                _dataItem.Add(new DataItem
+                {
+                    NumberOfUsers = item.Count(),
+                    Year = item.Key
+                });
+            }
+        }
+    }
+
+    private async Task GetComplaints()
+    {
+        _complaints = Complaints;
+        if (_complaints.Any())
+        {
+            activeCount = (long)_complaints.Count(x => x.IsActive);
+            inActiveCount = (long)_complaints.Count(x => x.IsActive != true);
+            _complaintsGroup = _complaints.GroupBy(u => u.DateCreated.Year.ToString());
+            _dataItem = new();
+            foreach (var item in _complaintsGroup)
+            {
+                _dataItem.Add(new DataItem
+                {
+                    NumberOfUsers = item.Count(),
+                    Year = item.Key
+                });
+            }
+        }
+    }
+
+    [Parameter]
+    public RenderFragment IconSpan { get; set; }
+}
